@@ -18,8 +18,8 @@ import time
 
 #DATA_DIR = "../yalefaces/"
 DATA_DIR = "../"
-IMAGE_DIR = os.path.join(DATA_DIR, "jpg")
-#IMAGE_DIR = os.path.join(DATA_DIR, "yalefaces")
+# IMAGE_DIR = os.path.join(DATA_DIR, "jpg")
+IMAGE_DIR = os.path.join(DATA_DIR, "yalefaces")
 MODEL_NAME = 'SiamCNN_Model_{}'.format(time.strftime("%d_%m_%Y_%H-%M-%S"))
 
 
@@ -181,7 +181,7 @@ model = Model(inputs=[image_left, image_right], outputs=pred)
 
 model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-NUM_EPOCHS = 10
+NUM_EPOCHS = 20#10
 
 image_cache = {}
 train_gen = generate_image_triples_batch(triples_train, BATCH_SIZE, shuffle=True)
