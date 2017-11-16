@@ -1,12 +1,9 @@
-from __future__ import division, print_function
 from keras import backend as K
-from keras.applications import vgg16
 from keras.layers import Input, merge
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers.core import Activation, Dense, Dropout, Flatten, Lambda
 from keras.models import Sequential, Model
 from keras.utils import np_utils
-from sklearn.model_selection import train_test_split
 from random import shuffle
 from scipy.misc import imresize
 import itertools
@@ -14,29 +11,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import time
-#matplotlib inline
-
-#DATA_DIR = "../yalefaces/"
-DATA_DIR = "../"
-IMAGE_DIR = "../second_24_faces/"#os.path.join(DATA_DIR, "jpg")
-#IMAGE_DIR = os.path.join(DATA_DIR, "yalefaces")
-MODEL_NAME = 'SiamCNN_Model_6660faces_{}'.format(time.strftime("%d_%m_%Y_%H-%M-%S"))
-
-
-def show_img(sid, img_file, img_title):
-    plt.subplot(sid)
-    plt.title(img_title)
-    plt.xticks([])
-    plt.yticks([])
-    img = imresize(plt.imread(img_file), (512, 512))
-    plt.imshow(img)
-
-
-#show_img(131, os.path.join(IMAGE_DIR, "115200.jpg"), "original")
-#show_img(132, os.path.join(IMAGE_DIR, "115201.jpg"), "similar")
-#show_img(133, os.path.join(IMAGE_DIR, "123700.jpg"), "different")
-#plt.tight_layout()
-plt.show()
 
 
 def get_random_image(img_groups, group_names, gid):
@@ -52,7 +26,7 @@ def create_triples(image_dir):
     for img_file in os.listdir(image_dir):
         prefix, suffix = img_file.split(".")
         gid, pid = prefix[0:4], prefix[4:]
-        if gid in img_groups:#img_groups.has_key(gid):
+        if gid in img_groups:  # img_groups.has_key(gid):
             img_groups[gid].append(pid)
         else:
             img_groups[gid] = [pid]
@@ -74,18 +48,12 @@ def create_triples(image_dir):
     return pos_triples
 
 
-triples_data = create_triples(IMAGE_DIR)
-
-print("# image triples:", len(triples_data))
-[x for x in triples_data[0:5]]
-
-
 def load_image(image_name):
-    if not image_name in image_cache:#image_cache.has_key(image_name):
+    if not image_name in image_cache:  # image_cache.has_key(image_name):
         image = plt.imread(os.path.join(IMAGE_DIR, image_name)).astype(np.float32)
         image = imresize(image, (224, 224))
-        #image = imresize(image, (320, 243))
-        image = np.divide(image, 256)
+        # image = imresize(image, (320, 243))
+        image = np.divide(image, 128)
         image_cache[image_name] = image
     return image_cache[image_name]
 
@@ -114,22 +82,51 @@ def generate_image_triples_batch(image_triples, batch_size, shuffle=False):
             yield ([Xlhs, Xrhs], Y)
 
 
-BATCH_SIZE = 16#64
-
-split_point = int(len(triples_data) * 0.7)
-triples_train, triples_test = triples_data[0:split_point], triples_data[split_point:]
-
-
 def create_base_network(input_shape):
     seq = Sequential()
+    # STARY NEFUNKCNI
     # CONV => RELU => POOL
+    # seq.add(Conv2D(20, kernel_size=5, padding="same", input_shape=input_shape))
+    # seq.add(Activation("relu"))
+    # seq.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    # # CONV => RELU => POOL
+    # seq.add(Conv2D(50, kernel_size=5, padding="same"))
+    # seq.add(Activation("relu"))myCNN.py
+    # seq.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    # # added
+    # # CONV => RELU => POOL
+    # seq.add(Conv2D(50, kernel_size=5, padding="same"))
+    # seq.add(Activation("relu"))
+    # seq.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+
+    #NEJLEPSI NA YF1
     seq.add(Conv2D(20, kernel_size=5, padding="same", input_shape=input_shape))
     seq.add(Activation("relu"))
-    seq.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    seq.add(MaxPooling2D(pool_size=(4, 4), strides=None))
     # CONV => RELU => POOL
     seq.add(Conv2D(50, kernel_size=5, padding="same"))
     seq.add(Activation("relu"))
-    seq.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    seq.add(MaxPooling2D(pool_size=(4, 4), strides=None))
+    # added
+    # CONV => RELU => POOL
+    seq.add(Conv2D(50, kernel_size=5, padding="same"))
+    seq.add(Activation("relu"))
+    seq.add(MaxPooling2D(pool_size=(4, 4), strides=None))
+
+    # # TEST NA YF2
+    # seq.add(Conv2D(20, kernel_size=5, padding="same", input_shape=input_shape))
+    # seq.add(Activation("relu"))
+    # seq.add(MaxPooling2D(pool_size=(8, 8), strides=None))
+    # # CONV => RELU => POOL
+    # seq.add(Conv2D(50, kernel_size=5, padding="same"))
+    # seq.add(Activation("relu"))
+    # seq.add(MaxPooling2D(pool_size=(4, 4), strides=None))
+    # # added
+    # # CONV => RELU => POOL
+    # seq.add(Conv2D(50, kernel_size=5, padding="same"))
+    # seq.add(Activation("relu"))
+    # seq.add(MaxPooling2D(pool_size=(2, 2), strides=None))
+    #
     # Flatten => RELU
     seq.add(Flatten())
     seq.add(Dense(500))
@@ -152,8 +149,23 @@ def cosine_distance_output_shape(shapes):
 def compute_accuracy(preds, labels):
     return labels[preds.ravel() < 0.5].mean()
 
+
+DATA_DIR = "../"
+IMAGE_DIR = "../yalefaces/"  # os.path.join(DATA_DIR, "jpg")
+MODEL_NAME = 'SiamCNN_Model_yalefaces_{}'.format(time.strftime("%d_%m_%Y_%H-%M-%S"))
+
+triples_data = create_triples(IMAGE_DIR)
+
+print("# image triples:", len(triples_data))
+[x for x in triples_data[0:5]]
+
+BATCH_SIZE = 16  # 64
+
+split_point = int(len(triples_data) * 0.7)
+triples_train, triples_test = triples_data[0:split_point], triples_data[split_point:]
+
 input_shape = (224, 224, 3)
-#input_shape = (320, 243, 3)
+# input_shape = (320, 243, 3)
 base_network = create_base_network(input_shape)
 
 image_left = Input(shape=input_shape)
@@ -164,10 +176,6 @@ vector_right = base_network(image_right)
 
 distance = Lambda(cosine_distance,
                   output_shape=cosine_distance_output_shape)([vector_left, vector_right])
-
-# fc1 = Dense(512, kernel_initializer="glorot_uniform")(distance)
-# fc1 = Dropout(0.2)(fc1)
-# fc1 = Activation("relu")(fc1)
 
 fc1 = Dense(128, kernel_initializer="glorot_uniform")(distance)
 fc1 = Dropout(0.2)(fc1)
@@ -181,7 +189,7 @@ model = Model(inputs=[image_left, image_right], outputs=pred)
 
 model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-NUM_EPOCHS = 10#10
+NUM_EPOCHS = 100
 
 image_cache = {}
 train_gen = generate_image_triples_batch(triples_train, BATCH_SIZE, shuffle=True)

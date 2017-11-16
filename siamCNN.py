@@ -18,9 +18,9 @@ import time
 
 #DATA_DIR = "../yalefaces/"
 DATA_DIR = "../"
-IMAGE_DIR = os.path.join(DATA_DIR, "jpg")
+IMAGE_DIR = "../jpg/"#os.path.join(DATA_DIR, "jpg")
 #IMAGE_DIR = os.path.join(DATA_DIR, "yalefaces")
-MODEL_NAME = 'SiamCNN_Model_{}'.format(time.strftime("%d_%m_%Y_%H-%M-%S"))
+MODEL_NAME = 'SiamCNN_Model_krajina_puvodni_{}'.format(time.strftime("%d_%m_%Y_%H-%M-%S"))
 
 
 def show_img(sid, img_file, img_title):
@@ -34,9 +34,9 @@ def show_img(sid, img_file, img_title):
 
 #show_img(131, os.path.join(IMAGE_DIR, "115200.jpg"), "original")
 #show_img(132, os.path.join(IMAGE_DIR, "115201.jpg"), "similar")
-#show_img(133, os.path.join(IMAGE_DIR, "123700.jpg"), "different")
+#show_img(133, os.path.join(IMAGE_DIR, "113700.jpg"), "different")
 #plt.tight_layout()
-plt.show()
+#plt.show()
 
 
 def get_random_image(img_groups, group_names, gid):
@@ -85,7 +85,7 @@ def load_image(image_name):
         image = plt.imread(os.path.join(IMAGE_DIR, image_name)).astype(np.float32)
         image = imresize(image, (224, 224))
         #image = imresize(image, (320, 243))
-        image = np.divide(image, 256)
+        image = np.divide(image, 128)
         image_cache[image_name] = image
     return image_cache[image_name]
 
@@ -181,7 +181,7 @@ model = Model(inputs=[image_left, image_right], outputs=pred)
 
 model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-NUM_EPOCHS = 10
+NUM_EPOCHS = 100
 
 image_cache = {}
 train_gen = generate_image_triples_batch(triples_train, BATCH_SIZE, shuffle=True)
@@ -204,6 +204,7 @@ plt.plot(history.history["loss"], color="r", label="train")
 plt.plot(history.history["val_loss"], color="b", label="validation")
 plt.legend(loc="best")
 
+
 plt.subplot(212)
 plt.title("Accuracy")
 plt.plot(history.history["acc"], color="r", label="train")
@@ -212,4 +213,4 @@ plt.legend(loc="best")
 
 plt.tight_layout()
 plt.show()
-plt.savefig(filepath=DATA_DIR + "trained_models/" + MODEL_NAME + ".png")
+plt.savefig(filepath=DATA_DIR + "trained_models/", filename=MODEL_NAME + ".png")
